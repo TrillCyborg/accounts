@@ -39,11 +39,7 @@ const siteConfig = {
   //   organizationName: 'JoelMarcey'
 
   // For no header links in the top nav bar -> headerLinks: [],
-  headerLinks: [
-    { doc: 'usage', label: 'Usage' },
-    { doc: 'api', label: 'API' },
-    { href: 'https://github.com/accounts-js/accounts', label: 'GitHub' },
-  ],
+  headerLinks: [{ doc: 'usage', label: 'Usage' }, { doc: 'api', label: 'API' }],
 
   // If you have users set above, you add it here:
   users,
@@ -54,15 +50,9 @@ const siteConfig = {
 
   /* colors for website */
   colors: {
-    primaryColor: '#8fced1',
-    secondaryColor: '#5d4b8e',
+    primaryColor: '#8c8c8c',
+    secondaryColor: '#303030',
   },
-
-  // Allow URLs with no html extension
-  cleanUrl: true,
-
-  // URL for editing docs
-  editUrl: 'https://github.com/accounts-js/accounts/tree/master/docs/',
 
   /* custom fonts for website */
   /*fonts: {
