@@ -1,0 +1,38 @@
+{
+  "name": "@accounts/boost",
+  "version": "0.3.0-beta.24",
+  "description": "Preconfigured accounts server and client",
+  "main": "lib/index.js",
+  "typings": "lib/index.d.ts",
+  "publishConfig": {
+    "access": "public"
+  },
+  "scripts": {
+    "clean": "rimraf lib",
+    "start": "tsc --watch",
+    "precompile": "yarn clean",
+    "compile": "tsc",
+    "prepublishOnly": "yarn compile"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/accounts-js/accounts/tree/master/packages/boost"
+  },
+  "license": "MIT",
+  "devDependencies": {
+    "rimraf": "2.6.2"
+  },
+  "dependencies": {
+    "@accounts/client": "^0.3.0-beta.24",
+    "@accounts/database-manager": "^0.3.0-beta.25",
+    "@accounts/graphql-api": "^0.3.0-beta.24",
+    "@accounts/mongo": "^0.3.0-beta.25",
+    "@accounts/password": "^0.3.0-beta.25",
+    "@accounts/server": "^0.3.0-beta.24",
+    "@accounts/types": "^0.3.0-beta.25",
+    "apollo-server": "^2.0.0",
+    "graphql-tools": "^3.1.1",
+    "lodash": "^4.17.10",
+    "mongoose": "^5.2.6"
+  }
+}
