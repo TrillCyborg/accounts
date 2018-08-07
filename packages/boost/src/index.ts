@@ -7,8 +7,6 @@ import { createAccountsGraphQL } from '@accounts/graphql-api';
 import { makeExecutableSchema } from 'graphql-tools';
 import { merge, get } from 'lodash';
 import * as mongoose from 'mongoose';
-import AccountsPassword from '@accounts/password';
-import MongoDBInterface from '@accounts/mongo';
 import { AuthenticationService } from '@accounts/types';
 import { DatabaseManager } from '@accounts/database-manager';
 
@@ -24,21 +22,31 @@ export interface AccountsServerOptions extends _AccountsServerOptions {
 const defaultMongoUri = 'mongodb://localhost:27017/accounts-js';
 
 export class AccountsServer extends _AccountsServer {
-  public static readonly SERVER_PORT = 52682;
+  public static readonly SERVER_PORT = 4003;
   public apolloServer: ApolloServer;
 
-  constructor(
-    options?: AccountsServerOptions,
-    services?: { [key: string]: AuthenticationService }
-  ) {
-    mongoose.connect(get(options, ['storage', 'uri'], defaultMongoUri));
+  constructor(options?: AccountsServerOptions) {
+    // Determine which database package the consumer installed
+    let db;
 
-    const userStorage = new MongoDBInterface(mongoose.connection);
+    if (require.resolve('@accounts/mongo')) {
+      const MongoDBInterface = require('@accounts/mongo').default;
+      mongoose.connect(get(options, ['storage', 'uri'], defaultMongoUri));
 
-    const db = new DatabaseManager({
-      sessionStorage: userStorage,
-      userStorage,
-    });
+      const userStorage = new MongoDBInterface(mongoose.connection);
+
+      db = new DatabaseManager({
+        sessionStorage: userStorage,
+        userStorage,
+      });
+    }
+
+    const servicePackages: any = {};
+
+    if (require.resolve('@accounts/password')) {
+      const AccountsPassword = require('@accounts/password').default;
+      servicePackages.password = new AccountsPassword(get(options, ['services', 'password']));
+    }
 
     super(
       merge(
@@ -47,15 +55,10 @@ export class AccountsServer extends _AccountsServer {
           db,
           tokenSecret: 'SECRET',
         },
+        // Consumer provided options
         options
       ),
-      merge(
-        {},
-        {
-          password: new AccountsPassword(),
-        },
-        services
-      )
+      merge({}, servicePackages)
     );
 
     const accountsGraphQL = createAccountsGraphQL(this, { extend: false });

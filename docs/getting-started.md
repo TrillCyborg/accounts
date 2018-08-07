@@ -6,35 +6,84 @@ sidebar_label: Getting started
 
 # Getting started
 
-Welcome to the `@accounts` documentation. This suite of packages aims to provide the consumer an end to end solution authentication and accounts management, with a simple to start with interface and options for configuration. Out of the box these packages provide OAuth with popular providers (Instagram, Twitter), Two factor authentication, password accounts along with recovery options and customizable account creation and validation.
+Welcome to the `@accounts` documentation. This suite of packages aims to provide the consumer an end to end solution authentication and accounts management, with a simple to start with interface and deep options for configuration. These packages provide OAuth support for popular providers (Instagram, Twitter, Github), two factor authentication, password based accounts along with recovery options and customizable account creation and validation.
 
 ## Installation
 
 The `@accounts` packages are modular by nature and can be manually installed and configured, however we provide a few helpful abstractions over several commonly used packages to provide the consumer a preconfigured accounts server.
 
-**Quick install**
+## Quick install
 
-> npm install @accounts/boost @accounts/mongo
-
-or
-
-> yarn install @accounts/boost @accounts/mongo
-
-and a database driver
-
-> npm install @accounts/mongo
+`npm install @accounts/boost @accounts/mongo`
 
 or
 
-> yarn install @accounts/mongo
+`yarn add @accounts/boost @accounts/mongo`
+
+**Choose your database database driver**
+
+`npm install @accounts/mongo`
+
+or
+
+`yarn add @accounts/mongo`
+
+Choose your authentication services
+
+`npm install @accounts/password`
+
+`npm install @accounts/github`
+
+or
+
+`yarn add @accounts/password`
+
+`yarn add @accounts/github`
+
+The following starts an accounts server using the database, transport, and authentication services you provided with the default settings.
 
 ```javascript
 import AccountsServer from `@accounts/boost`;
 
-const accountsServer = new AccountsServer().listen()
+const accountsServer = new AccountsServer().listen();
 ```
 
-**Manual install**
+At this point you will have a GraphQL server running at http://localhost:4003 with a GraphQL playground available at the same address.
+
+Configured additional options, such as providing custom connection options for database, along with additional parameters based on your chosen assortment of packages can be achieved by supplying environmental variables or by passing an options object when initializing the `AccountsServer`.
+
+Assuming you've installed the following packages, `@accounts/mongo` and `@accounts/password` the default mongo connection options will be applied and a database called `accounts-js` will be used.
+
+Out of the box `@accounts/password` is preconfigured to allow users to sign up with usernames or email addresses.
+
+You may configure the installed packages via environmental variables or through an options object passed to `AccountsServer`.
+
+**Environmental variables:**
+
+`export ACCOUNTS_TOKEN_SECERT="your secret"``
+
+`export ACCOUNTS_SITE="http://localhost:3000/"``
+
+> When being used in production, it may be advantageous to configure `@accounts` via env variables than strictly through Javascript.
+
+**Javascript:**
+
+```javascript
+import AccountsServer from `@accounts/boost`;
+
+const accountsServer = new AccountsServer({
+  tokenSecret: 'your secret',
+  site: 'http://localhost:3000/'
+}).listen();
+```
+
+At this point the accounts server is ready to be deployed.
+
+<!-- Add a link to the options type definitions  -->
+
+The full list of options can be viewed here.
+
+## Long install
 
 # About
 
