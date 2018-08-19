@@ -1,31 +1,41 @@
-import {
-  AccountsServer as _AccountsServer,
-  AccountsServerOptions as _AccountsServerOptions,
-} from '@accounts/server';
+import { AccountsServer as _AccountsServer, AccountsServerOptions } from '@accounts/server';
 import { ApolloServer } from 'apollo-server';
-import { createAccountsGraphQL } from '@accounts/graphql-api';
+import { createAccountsGraphQL, accountsContext } from '@accounts/graphql-api';
 import { makeExecutableSchema } from 'graphql-tools';
+import { GraphQLSchema } from 'graphql';
 import { merge, get } from 'lodash';
 import * as mongoose from 'mongoose';
-import { AuthenticationService } from '@accounts/types';
+// import { AuthenticationService } from '@accounts/types';
 import { DatabaseManager } from '@accounts/database-manager';
 
-export interface AccountsServerOptions extends _AccountsServerOptions {
-  apolloServer?: ApolloServer;
-  userResolvers: any;
-  userTypeDefs: any;
-  storage: {
+export { AccountsServerOptions };
+
+export interface AccountsBoostServerOptions extends AccountsServerOptions {
+  storage?: {
     uri?: string;
   };
 }
 
 const defaultMongoUri = 'mongodb://localhost:27017/accounts-js';
 
-export class AccountsServer extends _AccountsServer {
+export interface AccountsGraphQL {
+  schema: GraphQLSchema;
+  typeDefs: string;
+  resolvers: {
+    [x: string]: any;
+  };
+  schemaDirectives: {
+    auth: any;
+  };
+  accountsContext: any;
+}
+
+export class AccountsServer {
   public static readonly SERVER_PORT = 4003;
   public apolloServer: ApolloServer;
+  public accountsServer: _AccountsServer;
 
-  constructor(options?: AccountsServerOptions) {
+  constructor(options?: AccountsBoostServerOptions) {
     // Determine which database package the consumer installed
     let db;
 
@@ -48,12 +58,11 @@ export class AccountsServer extends _AccountsServer {
       servicePackages.password = new AccountsPassword(get(options, ['services', 'password']));
     }
 
-    super(
+    this.accountsServer = new _AccountsServer(
       merge(
         {},
         {
           db,
-          tokenSecret: 'SECRET',
         },
         // Consumer provided options
         options
@@ -61,26 +70,9 @@ export class AccountsServer extends _AccountsServer {
       merge({}, servicePackages)
     );
 
-    const accountsGraphQL = createAccountsGraphQL(this, { extend: false });
-
-    const schema = makeExecutableSchema({
-      typeDefs: [accountsGraphQL.typeDefs],
-      resolvers: merge(accountsGraphQL.resolvers),
-      schemaDirectives: {
-        ...accountsGraphQL.schemaDirectives,
-      },
+    this.apolloServer = new ApolloServer({
+      schema: this.graphql() as any,
     });
-
-    const CustomApolloServer = (options &&
-      options.apolloServer &&
-      options.apolloServer) as ApolloServer;
-
-    this.apolloServer =
-      options && options.apolloServer
-        ? CustomApolloServer
-        : new ApolloServer({
-            schema,
-          });
   }
 
   public async listen(options: any = {}): Promise<any> {
@@ -93,6 +85,24 @@ export class AccountsServer extends _AccountsServer {
     console.log(`Accounts GraphQL server running at ${res.url}`);
 
     return res;
+  }
+
+  public graphql(): AccountsGraphQL {
+    const accountsGraphQL = createAccountsGraphQL(this.accountsServer, { extend: true });
+
+    const schema = makeExecutableSchema({
+      typeDefs: [createAccountsGraphQL(this.accountsServer, { extend: false }).typeDefs],
+      resolvers: merge(accountsGraphQL.resolvers),
+      schemaDirectives: {
+        ...accountsGraphQL.schemaDirectives,
+      },
+    });
+
+    return {
+      schema,
+      accountsContext,
+      ...accountsGraphQL,
+    };
   }
 }
 

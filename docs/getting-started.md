@@ -14,74 +14,113 @@ The `@accounts` packages are modular by nature and can be manually installed and
 
 ## Quick install
 
+**Install the core**
+
 `npm install @accounts/boost @accounts/mongo`
-
-or
-
-`yarn add @accounts/boost @accounts/mongo`
 
 **Choose your database database driver**
 
 `npm install @accounts/mongo`
 
-or
-
-`yarn add @accounts/mongo`
-
 Choose your authentication services
 
 `npm install @accounts/password`
 
-`npm install @accounts/github`
-
-or
-
-`yarn add @accounts/password`
-
-`yarn add @accounts/github`
-
 The following starts an accounts server using the database, transport, and authentication services you provided with the default settings.
 
-```javascript
-import AccountsServer from `@accounts/boost`;
+**Example - accounts graphql microservice**
 
-const accountsServer = new AccountsServer().listen();
+```javascript
+import { AccountsServer } from `@accounts/boost`;
+
+const accountsServer = new AccountsServer({
+  tokenSecret: 'your secret',
+}).listen();
 ```
 
-At this point you will have a GraphQL server running at http://localhost:4003 with a GraphQL playground available at the same address.
+At this point you will have an accounts GraphQL server running at http://localhost:4003 with a GraphQL playground available at the same address.
 
-Configured additional options, such as providing custom connection options for database, along with additional parameters based on your chosen assortment of packages can be achieved by supplying environmental variables or by passing an options object when initializing the `AccountsServer`.
+Configured additional options, such as providing custom connection options for database, along with additional parameters based on your chosen assortment of packages can be achieved by supplying by passing an options object when initializing the `AccountsServer`.
 
 Assuming you've installed the following packages, `@accounts/mongo` and `@accounts/password` the default mongo connection options will be applied and a database called `accounts-js` will be used.
 
 Out of the box `@accounts/password` is preconfigured to allow users to sign up with usernames or email addresses.
 
-You may configure the installed packages via environmental variables or through an options object passed to `AccountsServer`.
-
-**Environmental variables:**
-
-`export ACCOUNTS_TOKEN_SECERT="your secret"``
-
-`export ACCOUNTS_SITE="http://localhost:3000/"``
-
-> When being used in production, it may be advantageous to configure `@accounts` via env variables than strictly through Javascript.
-
-**Javascript:**
-
-```javascript
-import AccountsServer from `@accounts/boost`;
-
-const accountsServer = new AccountsServer({
-  tokenSecret: 'your secret',
-  site: 'http://localhost:3000/'
-}).listen();
-```
-
-At this point the accounts server is ready to be deployed.
+At this point your accounts server is ready to be used. A full list of configuration options can be found here.
 
 <!-- Add a link to the options type definitions  -->
 
-The full list of options can be viewed here.
+## Usage with existing GraphQL server
+
+An existing GraphQL server can be extended with `@accounts` functionality by calling the `AccountsServer.graphql()` function.
+
+This function will return the type definitions, resolvers, schema directives, the accounts GraphQL context function used for authentication, and finally the executable GraphQL schema used by `AccountsServer.listen()`.
+
+These variables should then be referenced when creating your GraphQL schema.
+
+**Example - adding accounts to a graphql server**
+
+```javascript
+import { AccountsServer } from '@accounts/boost';
+import { makeExecutableSchema, mergeSchemas } from 'graphql-tools';
+import { ApolloServer } from 'apollo-server';
+import { merge } from 'lodash';
+
+const accountsGraphQL = new AccountsServer({
+  tokenSecret: 'bad secret'
+} as any).graphql();
+
+const typeDefs = `
+  type PrivateType @auth {
+    field: String
+  }
+
+  type Query {
+    publicField: String
+    privateField: String @auth
+    privateType: PrivateType
+  }
+
+  type Mutation {
+    _: String
+  }
+  `;
+
+const resolvers = {
+  Query: {
+    publicField: () => 'public',
+    privateField: () => 'private',
+    privateType: () => ({
+      field: () => 'private',
+    }),
+  },
+};
+
+const apolloServer = new ApolloServer({
+  typeDefs: [typeDefs, accountsGraphQL.typeDefs],
+  resolvers: merge(accountsGraphQL.resolvers, resolvers),
+  schemaDirectives: {
+    ...accountsGraphQL.schemaDirectives,
+  },
+  context: ({ req }) => accountsGraphQL.accountsContext(req),
+} as any)
+  .listen()
+  .then((res) => {
+    console.log(`GraphQL server running at ${res.url}`);
+  })
+```
+
+## Authentication services
+
+**Packages**
+
+- `@accounts/password`
+
+## Database drivers
+
+**Packages**
+
+- `@accounts/mongo`
 
 ## Long install
 
