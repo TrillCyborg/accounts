@@ -71,7 +71,7 @@ export class AccountsServer {
     );
 
     this.apolloServer = new ApolloServer({
-      schema: this.graphql() as any,
+      schema: this.graphql().schema,
     });
   }
 
