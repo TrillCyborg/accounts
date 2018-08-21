@@ -10,13 +10,13 @@ Welcome to the `@accounts` documentation. This suite of packages aims to provide
 
 ## Installation
 
-The `@accounts` packages are modular by nature and can be manually installed and configured, however we provide a few helpful abstractions over several commonly used packages to provide the consumer a preconfigured accounts server.
+The `@accounts` packages are modular by nature and can be manually installed and configured, however we provide, `@accounts/boost`, a package containing helpful abstractions to get an accounts server started with minimal configuration.
 
 ## Quick install
 
 **Install the core**
 
-`npm install @accounts/boost @accounts/mongo`
+`npm install @accounts/boost`
 
 **Choose your database database driver**
 
@@ -28,7 +28,7 @@ Choose your authentication services
 
 The following starts an accounts server using the database, transport, and authentication services you provided with the default settings.
 
-**Example - accounts graphql microservice**
+**Start the accounts server**
 
 ```javascript
 import { AccountsServer } from `@accounts/boost`;
@@ -40,25 +40,23 @@ const accountsServer = new AccountsServer({
 
 At this point you will have an accounts GraphQL server running at http://localhost:4003 with a GraphQL playground available at the same address.
 
-Configured additional options, such as providing custom connection options for database, along with additional parameters based on your chosen assortment of packages can be achieved by supplying by passing an options object when initializing the `AccountsServer`.
+Configuring additional options, such as providing custom connection options for a database or additional parameters based on your chosen packages can be achieved by supplying by passing an options object when initializing the `AccountsServer`.
 
 Assuming you've installed the following packages, `@accounts/mongo` and `@accounts/password` the default mongo connection options will be applied and a database called `accounts-js` will be used.
 
 Out of the box `@accounts/password` is preconfigured to allow users to sign up with usernames or email addresses.
 
-At this point your accounts server is ready to be used. A full list of configuration options can be found here.
-
 <!-- Add a link to the options type definitions  -->
 
 ## Usage with existing GraphQL server
 
-An existing GraphQL server can be extended with `@accounts` functionality by calling the `AccountsServer.graphql()` function.
+An existing GraphQL server can be extended with accounts functionality by calling the `AccountsServer.graphql()` function.
 
 This function will return the type definitions, resolvers, schema directives, the accounts GraphQL context function used for authentication, and finally the executable GraphQL schema used by `AccountsServer.listen()`.
 
 These variables should then be referenced when creating your GraphQL schema.
 
-**Example - adding accounts to a graphql server**
+**Adding accounts to a GraphQL server**
 
 ```javascript
 import { AccountsServer } from '@accounts/boost';
@@ -96,18 +94,86 @@ const resolvers = {
   },
 };
 
-const apolloServer = new ApolloServer({
+const graphqlServer = new ApolloServer({
   typeDefs: [typeDefs, accountsGraphQL.typeDefs],
   resolvers: merge(accountsGraphQL.resolvers, resolvers),
   schemaDirectives: {
     ...accountsGraphQL.schemaDirectives,
   },
   context: ({ req }) => accountsGraphQL.accountsContext(req),
-} as any)
-  .listen()
-  .then((res) => {
-    console.log(`GraphQL server running at ${res.url}`);
-  })
+});
+
+graphqlServer.listen().then(({ url }) => {
+  console.log(`🚀 Server ready at ${url}`);
+});
+```
+
+## Usage as a GraphQL service
+
+Based on your requirements it can be advantageous to deploy a single accounts server which is then consumed by multiple apps.
+
+The following examples will show you how to setup a GraphQL server which can authenticate requests via a JWT token.
+
+First, start an accounts server:
+
+```javascript
+import { AccountsServer } from `@accounts/boost`;
+
+const accountsServer = new AccountsServer({
+  tokenSecret: 'your secret',
+}).listen();
+```
+
+Next update your GraphQL server's context function to authorize the request and add a `user` key to the context. Optionally if you want to use the `@auth` directive, pass in the accounts schema directives.
+
+**Note:** The `tokenSecret` option provided to the accounts service **must match** the one provided to the `accountsContext` function. This is used to sign and validate JWT tokens.
+
+```javascript
+import { ApolloServer } from 'apollo-server';
+import { accountsContext, accountsSchemaDirectives } from '@accounts/boost';
+
+const typeDefs = `
+  type PrivateType @auth {
+    field: String
+  }
+
+  type Query {
+    publicField: String
+    privateField: String @auth
+    privateType: PrivateType
+  }
+
+  type Mutation {
+    _: String
+  }
+  `;
+
+const resolvers = {
+  Query: {
+    publicField: () => 'public',
+    privateField: () => 'private',
+    privateType: () => ({
+      field: () => 'private',
+    }),
+  },
+};
+
+const graphqlServer = new ApolloServer({
+  typeDefs,
+  resolvers,
+  schemaDirectives: {
+    ...accountsSchemaDirectives,
+  },
+  context: ({ req }) => accountsGraphQL.accountsContext({
+    tokenSecret: 'bad secret'
+  })(req),
+});
+
+graphqlServer.listen().then(({ url }) => {
+  console.log(`🚀 Server ready at ${url}`);
+});
+
+};
 ```
 
 ## Authentication services
