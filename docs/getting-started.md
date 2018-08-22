@@ -6,7 +6,7 @@ sidebar_label: Getting started
 
 # Getting started
 
-Welcome to the `@accounts` documentation. This suite of packages aims to provide the consumer an end to end solution authentication and accounts management, with a simple to start with interface and deep options for configuration. These packages provide OAuth support for popular providers (Instagram, Twitter, Github), two factor authentication, password based accounts along with recovery options and customizable account creation and validation.
+Welcome to the `@accounts` documentation. This suite of packages aims to provide the consumer an end to end solution authentication and accounts management, with a simple to start with interface and deep options for configuration. These packages provide OAuth support for popular providers such as Instagram, Twitter, Github, two factor authentication, password based accounts along with recovery options and customizable account creation and validation.
 
 ## Installation
 
@@ -130,7 +130,7 @@ Next update your GraphQL server's context function to authorize the request and 
 
 ```javascript
 import { ApolloServer } from 'apollo-server';
-import { accountsContext, accountsSchemaDirectives } from '@accounts/boost';
+import { AccountsBoost } from '@accounts/boost';
 
 const typeDefs = `
   type PrivateType @auth {

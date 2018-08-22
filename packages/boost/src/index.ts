@@ -1,4 +1,4 @@
-import { AccountsServer as _AccountsServer, AccountsServerOptions } from '@accounts/server';
+import { AccountsServer, AccountsServerOptions } from '@accounts/server';
 import { ApolloServer } from 'apollo-server';
 import { createAccountsGraphQL, accountsContext } from '@accounts/graphql-api';
 import { makeExecutableSchema } from 'graphql-tools';
@@ -10,7 +10,7 @@ import { DatabaseManager } from '@accounts/database-manager';
 
 export { AccountsServerOptions };
 
-export interface AccountsBoostServerOptions extends AccountsServerOptions {
+export interface AccountsBoostOptions extends AccountsServerOptions {
   storage?: {
     uri?: string;
   };
@@ -27,15 +27,14 @@ export interface AccountsGraphQL {
   schemaDirectives: {
     auth: any;
   };
-  accountsContext: any;
 }
 
-export class AccountsServer {
+export class AccountsBoost {
   public static readonly SERVER_PORT = 4003;
   public apolloServer: ApolloServer;
-  public accountsServer: _AccountsServer;
+  public accountsServer: AccountsServer;
 
-  constructor(options?: AccountsBoostServerOptions) {
+  constructor(options?: AccountsBoostOptions) {
     // Determine which database package the consumer installed
     let db;
 
@@ -58,7 +57,7 @@ export class AccountsServer {
       servicePackages.password = new AccountsPassword(get(options, ['services', 'password']));
     }
 
-    this.accountsServer = new _AccountsServer(
+    this.accountsServer = new AccountsServer(
       merge(
         {},
         {
@@ -78,7 +77,7 @@ export class AccountsServer {
   public async listen(options: any = {}): Promise<any> {
     const res = await this.apolloServer.listen({
       ...options,
-      port: options.port || AccountsServer.SERVER_PORT,
+      port: options.port || AccountsBoost.SERVER_PORT,
     });
 
     // tslint:disable-next-line no-console
@@ -100,10 +99,9 @@ export class AccountsServer {
 
     return {
       schema,
-      accountsContext,
       ...accountsGraphQL,
     };
   }
 }
 
-export default AccountsServer;
+export default AccountsBoost;

@@ -118,5 +118,6 @@ export const createAccountsGraphQL = (
     schemaDirectives: {
       auth: createAuthenticatedDirective(accountsServer),
     },
+    auth: (func: () => any) => authenticated(accountsServer, func),
   };
 };
