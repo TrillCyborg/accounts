@@ -6,11 +6,11 @@ sidebar_label: Getting started
 
 # Getting started
 
-Welcome to the `@accounts` documentation. This suite of packages aims to provide the consumer an end to end solution authentication and accounts management, with a simple to start with interface and deep options for configuration. These packages provide OAuth support for popular providers such as Instagram, Twitter, Github, two factor authentication, password based accounts along with recovery options and customizable account creation and validation.
+Welcome to the `@accounts` documentation. This suite of packages aims to provide the consumer an end to end authentication and accounts management solution, with a simple to start with interface while preserving options for configuration. These packages provide OAuth support for popular providers such as Instagram, Twitter, Github, two factor authentication, password based accounts along with recovery options and customizable account creation and validation.
 
 ## Installation
 
-The `@accounts` packages are modular by nature and can be manually installed and configured, however we provide, `@accounts/boost`, a package containing helpful abstractions to get an accounts server started with minimal configuration.
+The `@accounts` packages are modular by nature and can be manually installed and configured, however we provide `@accounts/boost` - a package containing useful abstractions to get an accounts server started with minimal configuration.
 
 ## Quick install
 
@@ -31,11 +31,15 @@ The following starts an accounts server using the database, transport, and authe
 **Start the accounts server**
 
 ```javascript
-import { AccountsServer } from `@accounts/boost`;
+import accountsBoost from `@accounts/boost`;
 
-const accountsServer = new AccountsServer({
-  tokenSecret: 'your secret',
-}).listen();
+(async () => {
+
+  const accounts = await accountsBoost({
+    tokenSecret: 'your secret'
+  }).listen();
+
+})();
 ```
 
 At this point you will have an accounts GraphQL server running at http://localhost:4003 with a GraphQL playground available at the same address.

@@ -11,7 +11,7 @@ import {
 } from './graphql/types';
 import { queries, queriesPassword } from './graphql/queries';
 import { logout } from './resolvers/logout';
-import { registerPassword } from './resolvers/register-user';
+import { createUser } from './resolvers/create-user';
 import { resetPassword } from './resolvers/reset-password';
 import { sendResetPasswordEmail } from './resolvers/send-reset-password-email';
 import { verifyEmail, sendVerificationEmail } from './resolvers/verify-email';
@@ -94,7 +94,7 @@ export const createAccountsGraphQL = (
   if (passwordService) {
     mutationResolvers = {
       ...mutationResolvers,
-      register: registerPassword(accountsServer),
+      createUser: createUser(accountsServer),
       verifyEmail: verifyEmail(accountsServer),
       resetPassword: resetPassword(accountsServer),
       sendVerificationEmail: sendVerificationEmail(accountsServer),
@@ -118,6 +118,5 @@ export const createAccountsGraphQL = (
     schemaDirectives: {
       auth: createAuthenticatedDirective(accountsServer),
     },
-    auth: (func: () => any) => authenticated(accountsServer, func),
   };
 };

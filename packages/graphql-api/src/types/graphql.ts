@@ -55,9 +55,9 @@ export interface Mutation {
   refreshTokens?: LoginResult | null;
   logout?: boolean | null;
   authenticate?: LoginResult | null /** Example: Login with passwordauthenticate(serviceName: "password", params: {password: "<pw>", user: {email: "<email>"}}) */;
-  register?:
+  createUser?:
     | string
-    | null /** register returns the id corresponding db ids, such as number IDs, ObjectIDs or UUIDs */;
+    | null /** Creates a user with a password, returns the id corresponding db ids, such as number IDs, ObjectIDs or UUIDs */;
   verifyEmail?: boolean | null;
   resetPassword?: boolean | null;
   sendVerificationEmail?: boolean | null;
@@ -126,7 +126,7 @@ export interface AuthenticateMutationArgs {
   serviceName: string;
   params: AuthenticateParamsInput;
 }
-export interface RegisterMutationArgs {
+export interface CreateUserMutationArgs {
   user: CreateUserInput;
 }
 export interface VerifyEmailMutationArgs {
