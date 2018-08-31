@@ -10,6 +10,8 @@ import { verify } from 'jsonwebtoken';
 
 export { accountsContext };
 
+export { accountsContext };
+
 export { AccountsServerOptions };
 
 export interface AccountsBoostOptions extends AccountsServerOptions {
