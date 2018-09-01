@@ -4,8 +4,9 @@ import { ApolloServer } from 'apollo-server';
 import { createAccountsGraphQL, accountsContext, authenticated } from '@accounts/graphql-api';
 import { makeExecutableSchema } from 'graphql-tools';
 import { GraphQLSchema } from 'graphql';
-import { merge, get } from 'lodash';
+import { merge, get, isString } from 'lodash';
 import { DatabaseManager } from '@accounts/database-manager';
+import { verify } from 'jsonwebtoken';
 
 export { accountsContext };
 
@@ -16,6 +17,7 @@ export interface AccountsBoostOptions extends AccountsServerOptions {
     uri?: string;
     name?: string;
   };
+  micro?: boolean;
 }
 
 const defaultAccountsBoostOptions = {
@@ -117,12 +119,18 @@ export class AccountsBoost {
   public accountsServer: AccountsServer;
   public apolloServer: ApolloServer;
   private accountsGraphQL: AccountsGraphQL | undefined;
+  private options: AccountsBoostOptions;
 
-  constructor(options: AccountsServerOptions, services: { [key: string]: AuthenticationService }) {
+  constructor(options: AccountsBoostOptions, services: { [key: string]: AuthenticationService }) {
     this.accountsServer = new AccountsServer(options, services);
+    this.options = options;
 
     this.apolloServer = new ApolloServer({
       schema: this.graphql().schema,
+      context: ({ req }: any) => {
+        console.log(req.headers);
+        return accountsContext(req);
+      },
     });
   }
 
@@ -138,6 +146,7 @@ export class AccountsBoost {
   }
 
   public graphql(): AccountsGraphQL {
+    // Cache `this.accountsGraphQL` to avoid regenerating the schema if the user calls `accountsBoost.graphql()` multple times.
     if (this.accountsGraphQL) {
       return this.accountsGraphQL;
     }
@@ -153,10 +162,34 @@ export class AccountsBoost {
     });
 
     this.accountsGraphQL = {
+      ...accountsGraphQL,
       schema,
       context: accountsContext,
-      auth: authenticated,
-      ...accountsGraphQL,
+      auth: this.options.micro
+        ? (fn: any) =>
+            authenticated(
+              {
+                resumeSession: (accessToken: string) => {
+                  let decoded: any;
+
+                  if (!isString(accessToken)) {
+                    throw new Error('An access token is required');
+                  }
+
+                  try {
+                    decoded = verify(accessToken, this.options.tokenSecret);
+                  } catch (err) {
+                    throw new Error('Access token is not valid');
+                  }
+
+                  return {
+                    id: decoded.data.userId,
+                  };
+                },
+              } as any,
+              fn
+            )
+        : (fn: any) => authenticated(this.accountsServer, fn),
     };
 
     return this.accountsGraphQL as AccountsGraphQL;
