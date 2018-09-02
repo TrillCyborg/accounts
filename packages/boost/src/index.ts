@@ -128,7 +128,6 @@ export class AccountsBoost {
     this.apolloServer = new ApolloServer({
       schema: this.graphql().schema,
       context: ({ req }: any) => {
-        console.log(req.headers);
         return accountsContext(req);
       },
     });
